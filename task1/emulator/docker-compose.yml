@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  python_app:
+    image: python:3.8-slim  # Use the official Python 3.9 slim image
+    working_dir: /usr/src/app  # Set the working directory inside the container
+    volumes:
+      - .:/usr/src/app  # Mount your current directory to the container
+      - ../data:/data
+    environment:
+      - PYTHONUNBUFFERED=1  # Ensure Python output is displayed in real-time
+    command: >
+      sh -c "pip install -r requirements.txt && python stream_files.py"
+    stdin_open: true  # Keep stdin open so you can use the container interactively
+    tty: true

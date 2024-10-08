@@ -1,0 +1,74 @@
+version: "3"
+services:
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    user: root
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/:/data/
+      - ./pipelines:/pipelines
+    command: "spark-class org.apache.spark.deploy.master.Master"
+    networks:
+      - spark-net
+
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+    networks:
+      - spark-net
+    volumes:
+      - ./data/:/data/
+
+  pyspark:
+    image: bitnami/spark:latest
+    container_name: pyspark
+    depends_on:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ./data/:/data/
+      - ./pipelines:/pipelines
+    # entrypoint: [ "/bin/bash", "-c" ]
+    command: >
+      spark-submit --master spark://spark-master:7077 --packages io.delta:delta-spark_2.12:3.1.0 --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog /pipelines/payments.py --mode streaming
+    networks:
+      - spark-net
+  
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter-notebook
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - SPARK_OPTS=--packages io.delta:delta-spark_2.12:3.1.0,org.apache.hadoop:hadoop-aws:3.1.0  # Add Delta Lake dependencies
+      - SPARK_MASTER=spark://spark-master:7077
+    ports:
+      - "8888:8888"                          
+    volumes:
+      - ./data/delta:/data/delta
+      - ./notebooks:/home/jovyan/work
+    depends_on:
+      - spark-master
+      - spark-worker
+    command: >
+      start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    networks:
+      - spark-net
+
+networks:
+  spark-net:
+    driver: bridge

@@ -1,0 +1,28 @@
+metadata_catalog:
+  dataset_name: "Player"
+  source: "/data/source/Player.csv"
+  destination: "/data/destination/Player.csv"
+  fields:
+  - name: name
+    type: string
+    description: First name of the player
+  - name: surname
+    type: string
+    description: Surname of the player
+  - name: email
+    type: string
+    description: Email of the player
+    tags:
+      - PII
+  
+  permissions:
+  - role: unmasked
+    description: Allow users to view unmasked PII data
+    iam:
+      - admins@iam
+      - dbas@iam
+  - role: masked
+    description: Allow users to view masked PII data
+    iam:
+      - payments@iam
+      - traders@iam
