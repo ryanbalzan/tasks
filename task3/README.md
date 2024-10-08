@@ -16,7 +16,7 @@ SELECT CAST(transaction_date as DATE) transaction_date,
     COUNT(distinct player_id) AS unique_depositors,
     AVG(transaction_amount_EUR) AS average_deposit_amount
 FROM payments
-WHERE transaction_date >= '2024-04-01' AND transaction_date < '2024-05-01'
+WHERE CAST(transaction_date as DATE) >= '2024-04-01' AND CAST(transaction_date as DATE) < '2024-05-01'
 ```
 
 
@@ -36,7 +36,7 @@ SELECT
 FROM daily_stats
 WHERE DATE(transaction_date) >= startdate AND DATE(transaction_date) <= enddate
 GROUP BY DATE(transaction_date)
-ORDER BY day;
+ORDER BY DATE(transaction_date);
 ```
 
 Given Big Query does not have COUNT(DISTINCT) OVER WINDOW
